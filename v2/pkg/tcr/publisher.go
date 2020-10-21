@@ -352,6 +352,8 @@ func (pub *Publisher) deliverLetters() bool {
 	// Allow parallel publishing with transient channels.
 	parallelPublishSemaphore := make(chan struct{}, pub.ConnectionPool.Config.MaxCacheChannelCount/2+1)
 
+	ctx := context.Background() // TODO: pass this from outside (this is a for a quick dirty test)
+
 	for {
 
 		// Publish the letter.
@@ -362,7 +364,7 @@ func (pub *Publisher) deliverLetters() bool {
 
 				parallelPublishSemaphore <- struct{}{}
 				go func(letter *Letter) {
-					pub.PublishWithConfirmation(letter, pub.publishTimeOutDuration)
+					pub.PublishWithConfirmationContext(ctx, letter)
 					<-parallelPublishSemaphore
 				}(letter)
 
